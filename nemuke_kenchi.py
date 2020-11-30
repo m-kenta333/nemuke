@@ -88,7 +88,7 @@ while True:
             average_bit=1
             print(average_eye)
             #閾値設定
-            mabataki_close=average_eye*7/10
+            mabataki_close=average_eye*7/10 #瞬きと判断する閾値
             mabataki_open=average_eye*2/3
             frame_ave=sum(timelist)/len(timelist)
             print("frame_ave",frame_ave)
@@ -98,15 +98,16 @@ while True:
             print("save")
             testbit=1
 
+        #瞬きを検知する
         if listsize % sl == 0 and average_bit==1:
             start=listsize-sl+1
-            print("hani=",start,",",listsize)
+            print("hani=",start,",",listsize)#極小値を見つける範囲
             #sgf = signal.savgol_filter(mabatakilist[start:listsize], sl, 2, deriv=0)
             
             x=np.array(mabatakilist[start:listsize])
             #x=np.array(sgf)
             minList= signal.argrelmin(x,order=sl)
-            #print("len=",len(minList[0]))
+            #極小値がmabataki_closeの値以下だったら瞬きと検知する
             print("minList=",minList[0])
             for min in minList[0]:
                 print("min=",start+min)
