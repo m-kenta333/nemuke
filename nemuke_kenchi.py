@@ -14,7 +14,6 @@ counter=0
 mabatakilist=[]
 average_eye=0 #目の大きさの平均
 average_bit=0 #目の大きさの平均をとるタイミング
-testbit=0
 sl=5 #データの極小値を見つける範囲(order)
 listsize=0
 MaxFlame=1000
@@ -37,6 +36,13 @@ def mouth_marker(face_mat, position):
     for i, ((x, y)) in enumerate(position):
         cv2.circle(face_mat, (x, y), 1, (255, 255, 255), -1)
         cv2.putText(face_mat, str(i), (x + 2, y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)  
+
+def threshold_setting(mlist,bunshi,bunbo):#瞬きと判断する閾値設定
+    average_eye=sum(mlist)/len(mlist)
+    print(average_eye)
+    #閾値設定
+    return average_eye*bunshi/bunbo #平均値のbunshi/bunbo倍を瞬きと判断する閾値とする
+
         
 while True:
     tick = cv2.getTickCount()
@@ -48,6 +54,7 @@ while True:
     
 
     if len(faces) == 1:
+        #顔の輪郭どり
         e1 = cv2.getTickCount()
         x, y, w, h = faces[0, :]
 
@@ -62,7 +69,7 @@ while True:
         face_parts = face_utils.shape_to_np(face_parts)
 
         left_eye = face_parts[42:48]
-        mouth = face_parts[60:65]
+        mouth = face_parts[60:68]
         eye_marker(face_gray_resized, left_eye)
         mouth_marker(rgb,mouth)
 
@@ -82,21 +89,12 @@ while True:
 
         listsize=listsize+1
 
-        #目の開き具合の平均値測定
+        #初めの50フレームで目の大きさの平均値をとり、平均値をもとに瞬きと判断する閾値を設定する
         if listsize==50 and average_bit==0:
-            average_eye=sum(mabatakilist)/len(mabatakilist)
+            mabataki_close=threshold_setting(mabatakilist,7,10)
+            print("mabataki_close=",mabataki_close)
             average_bit=1
-            print(average_eye)
-            #閾値設定
-            mabataki_close=average_eye*7/10 #瞬きと判断する閾値
-            mabataki_open=average_eye*2/3
-            frame_ave=sum(timelist)/len(timelist)
-            print("frame_ave",frame_ave)
 
-
-        if listsize==100 and testbit==0:
-            print("save")
-            testbit=1
 
         #瞬きを検知する
         if listsize % sl == 0 and average_bit==1:
@@ -119,22 +117,20 @@ while True:
             minList=np.delete(minList, 0, 0)
             #print("del minList=",minList)
 
-
+        #メモリ削減のためmabatakilistの最初10フレームを削除
         if listsize > MaxFlame:
             print("delete")
             del mabatakilist[1:10]
             listsize=listsize-10
             #print("a="+str(sum(mabatakilist[1:10])/10))
             #print("b="+str(sum(mabatakilist[41:50])/10))
-
-
-        
-        
         
         cv2.imshow('frame_resize', face_gray_resized)
         e2 = cv2.getTickCount()
         if listsize<51:
             timelist.append((e2 - e1)/ cv2.getTickFrequency())
+
+
     cv2.putText(rgb,"counter="+str(counter), (10,180), cv2.FONT_HERSHEY_PLAIN, 3, (0,0,255), 3, 1)
 
     fps = cv2.getTickFrequency() / (cv2.getTickCount() - tick)
@@ -144,15 +140,14 @@ while True:
     
 
     cv2.imshow('frame', rgb)
+    #escを押すと実行を中止する
     if cv2.waitKey(1) == 27:  
         plt.plot(mabatakilist)  
         #sgf = signal.savgol_filter(mabatakilist, sl, 2, deriv=0)
         #plt.plot(sgf) 
         t = np.arange(0, listsize, 1)   
-        y1=average_eye+t*0
-        y2=mabataki_close+t*0
+        y1=mabataki_close+t*0
         plt.plot(t, y1)
-        plt.plot(t, y2)
         plt.savefig("image.png")
         print("mabataki=",counter)
         break  # esc to quit
