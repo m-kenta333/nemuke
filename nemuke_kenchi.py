@@ -27,15 +27,22 @@ def calc_ear(eye):
     eye_ear = (A + B) / (2.0 * C)
     return round(eye_ear, 3)
 
+def calc_mouthsize(mouthlist):
+    A = distance.euclidean(mouthlist[1], mouthlist[7])
+    B = distance.euclidean(mouthlist[3], mouthlist[5])
+    C = distance.euclidean(mouthlist[0], mouthlist[4])
+    mouth_ear = (A + B) / (2.0 * C)
+    return round(mouth_ear, 3)
+
 def eye_marker(face_mat, position):
     for i, ((x, y)) in enumerate(position):
         cv2.circle(face_mat, (x, y), 1, (255, 255, 255), -1)
         cv2.putText(face_mat, str(i), (x + 2, y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)  
 
-def mouth_marker(face_mat, position):
+def mouth_marker(face_mat, position,x0,y0):
     for i, ((x, y)) in enumerate(position):
-        cv2.circle(face_mat, (x, y), 1, (255, 255, 255), -1)
-        cv2.putText(face_mat, str(i), (x + 2, y - 2), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)  
+        cv2.circle(face_mat, (x+x0, y+y0), 1, (255, 255, 255), -1)
+        cv2.putText(face_mat, str(i), (x + 2+x0, y - 2+y0), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255), 1)  
 
 def threshold_setting(mlist,bunshi,bunbo):#瞬きと判断する閾値設定
     average_eye=sum(mlist)/len(mlist)
@@ -71,7 +78,7 @@ while True:
         left_eye = face_parts[42:48]
         mouth = face_parts[60:68]
         eye_marker(face_gray_resized, left_eye)
-        mouth_marker(rgb,mouth)
+        mouth_marker(rgb,mouth,x,y)
 
         left_eye_ear = calc_ear(left_eye)
         cv2.putText(rgb, "LEFT eye EAR:{} ".format(left_eye_ear), 
